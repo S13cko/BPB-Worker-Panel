@@ -16,7 +16,7 @@ let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
 
 let dohURL = 'https://cloudflare-dns.com/dns-query';
 
-let panelVersion = '2.3.5';
+let panelVersion = 'custom';
 
 if (!isValidUUID(userID)) {
     throw new Error('uuid is not valid');
@@ -408,8 +408,7 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 	return stream;
 }
 
-// https://xtls.github.io/development/protocols/vless.html
-// https://github.com/zizifn/excalidraw-backup/blob/main/v2ray-protocol.excalidraw
+
 
 /**
  * Processes the VLESS header buffer and returns an object with the relevant information.
@@ -780,7 +779,7 @@ const getNormalConfigs = async (env, hostName, client) => {
     const { cleanIPs, proxyIP } = proxySettings;
     const resolved = await resolveDNS(hostName);
     const Addresses = [
-        hostName,
+        'zula.ir',
         'www.speedtest.net',
     ];
 
@@ -792,12 +791,12 @@ const getNormalConfigs = async (env, hostName, client) => {
             randomUpperCase(hostName)
         }&sni=${
             randomUpperCase(hostName)
-        }&fp=randomized&alpn=http/1.1&path=${
+        }&fp=randomized&alpn=h3&path=${
             encodeURIComponent(`/${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}?ed=2560`)
         }#${encodeURIComponent(remark)}\n`;
     });
 
-    const subscription = client === 'singbox' ? btoa(vlessWsTls) : btoa(vlessWsTls.replaceAll('http/1.1', 'h2,http/1.1'));
+    const subscription = client === 'singbox' ? btoa(vlessWsTls) : btoa(vlessWsTls.replaceAll('h3', 'h2,h3'));
     return subscription;
 }
 
@@ -1315,7 +1314,7 @@ const renderHomePage = async (request, env, hostName, fragConfigs) => {
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>BPB Panel ${panelVersion}</title>
+        <title>Erfan worker ${panelVersion}</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 		<style>
@@ -1521,12 +1520,12 @@ const renderHomePage = async (request, env, hostName, fragConfigs) => {
 	</head>
 	
 	<body>
-		<h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</span> 💦</h1>
+		<h1>Erfan worker</h1>
 		<div class="form-container">
             <h2>FRAGMENT SETTINGS ⚙️</h2>
 			<form id="configForm">
 				<div class="form-control">
-					<label for="remoteDNS">🌏 Remote DNS</label>
+					<label for="remoteDNS">Remote DNS</label>
 					<input type="url" id="remoteDNS" name="remoteDNS" value="${remoteDNS}" required>
 				</div>
 				<div class="form-control">
@@ -1752,8 +1751,6 @@ const renderHomePage = async (request, env, hostName, fragConfigs) => {
             </div>
             <hr>
             <div class="footer">
-                <i class="fa fa-github" style="font-size:36px; margin-right: 10px;"></i>
-                <a class="link" href="https://github.com/bia-pain-bache/BPB-Worker-Panel" target="_blank">Github</a>
                 <button id="openModalBtn" class="button">Change Password</button>
                 <button type="button" id="logout" style="background: none; margin: 0; border: none; cursor: pointer;">
                     <i class="fa fa-power-off fa-2x" aria-hidden="true"></i>
@@ -2079,7 +2076,7 @@ const renderLoginPage = async () => {
     </head>
     <body>
         <div class="container">
-            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</h1>
+            <h1>Erfan worker</h1>
             <div class="form-container">
                 <h2>User Login</h2>
                 <form id="loginForm">
@@ -2150,7 +2147,7 @@ const renderErrorPage = (message, error, refer) => {
 
     <body>
         <div id="error-container">
-            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</h1>
+            <h1>Erfan worker</h1>
             <div id="error-message">
                 <h2>${message} ${refer 
                     ? 'Please try again!' 
@@ -2310,7 +2307,7 @@ const xrayOutboundTemp =
         tlsSettings: {
             allowInsecure: false,
             fingerprint: "chrome",
-            alpn: ["h2", "http/1.1"],
+            alpn: ["h2", "h3"],
             serverName: ""
         },
         wsSettings: {
@@ -2575,7 +2572,7 @@ const singboxOutboundTemp = {
     packet_encoding: "",
     tls: {
         alpn: [
-            "http/1.1"
+            "h3"
         ],
         enabled: true,
         insecure: false,

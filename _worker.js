@@ -1081,7 +1081,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
 
     
     Configs.push(
-        { address: 'Best-Ping', config: bestPing}, 
+        { address: 'Best-Ping', config: bestPing}//,
 //        { address: 'WorkerLess', config: workerLessConfig}
     );
 

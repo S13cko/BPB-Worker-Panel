@@ -16,7 +16,7 @@ let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
 
 let dohURL = 'https://cloudflare-dns.com/dns-query';
 
-let panelVersion = '0.0.0';
+let panelVersion = 'custom';
 
 if (!isValidUUID(userID)) {
     throw new Error('uuid is not valid');
@@ -645,10 +645,10 @@ function base64ToArrayBuffer(base64Str) {
  * @param {string} uuid The string to validate as a UUID.
  * @returns {boolean} True if the string is a valid UUID, false otherwise.
  */
-//function isValidUUID(uuid) {
-//	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-//	return uuidRegex.test(uuid);
-//}
+function isValidUUID(uuid) {
+	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+	return uuidRegex.test(uuid);
+}
 
 const WS_READY_STATE_OPEN = 1;
 const WS_READY_STATE_CLOSING = 2;
@@ -796,7 +796,7 @@ const getNormalConfigs = async (env, hostName, client) => {
         }#${encodeURIComponent(remark)}\n`;
     });
 
-    const subscription = client === 'singbox' ? btoa(vlessWsTls) : btoa(vlessWsTls.replaceAll('h3', 'h2,h3'));
+    const subscription = client === 'singbox' ? btoa(vlessWsTls) : btoa(vlessWsTls.replaceAll('http/1.1', 'h2,h3'));
     return subscription;
 }
 
@@ -900,10 +900,9 @@ const buildProxyOutbound = async (proxyParams) => {
     return proxyOutbound;
 }
 
-
 //const buildWorkerLessConfig = async (env, client) => {
 //    let proxySettings = {};
-//
+
 //    try {
 //        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
 //    } catch (error) {
@@ -926,7 +925,7 @@ const buildProxyOutbound = async (proxyParams) => {
 //    fakeOutbound.tag = 'fake-outbound';
 
 //    let fragConfig = structuredClone(xrayConfigTemp);
-//    fragConfig.remarks  = 'WorkerLess ⭐'
+//    fragConfig.remarks  = '⭐WorkerLess'
 //    fragConfig.dns = await buildDNSObject(remoteDNS, localDNS, blockAds, bypassIran, blockPorn, true);
 //    fragConfig.outbounds[0].settings.domainStrategy = 'UseIP';
 //    fragConfig.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
@@ -942,10 +941,10 @@ const buildProxyOutbound = async (proxyParams) => {
 //    delete fragConfig.routing.balancers;
 //    delete fragConfig.observatory;
 
-    if (client === 'nekoray') {
-        fragConfig.inbounds[0].port = 2080;
-        fragConfig.inbounds[1].port = 2081;
-    }
+//    if (client === 'nekoray') {
+//        fragConfig.inbounds[0].port = 2080;
+//        fragConfig.inbounds[1].port = 2081;
+//    }
 
 //    return fragConfig;
 //}
@@ -1076,12 +1075,12 @@ const getFragmentConfigs = async (env, hostName, client) => {
         bestPing.inbounds[1].port = 2081;
     }
 
-//    const workerLessConfig = await buildWorkerLessConfig(env, client);
+    const workerLessConfig = await buildWorkerLessConfig(env, client);
 
 
     
     Configs.push(
-        { address: 'Best-Ping', config: bestPing}//,
+        { address: 'Best-Ping', config: bestPing}//, 
 //        { address: 'WorkerLess', config: workerLessConfig}
     );
 
@@ -1715,7 +1714,7 @@ const renderHomePage = async (request, env, hostName, fragConfigs) => {
             </div>
             <h2>FRAGMENT - NEKORAY ⛓️</h2>
             <div class="table-container">
-				<table id="0.0.0-configs-table">
+				<table id="custom-configs-table">
 					<tr style="text-wrap: nowrap;">
 						<th>Config Address</th>
 						<th>Fragment Config</th>
@@ -2595,98 +2594,92 @@ const singboxOutboundTemp = {
     tag: ""
 };
 
-//const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
-const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn) => {
+const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
     let dnsObject = {
         hosts: {},
         servers: [
-            // Use remote DNS or Cloudflare DNS based on workerless mode
-            // isWorkerLess ? "https://cloudflare-dns.com/dns-query" : remoteDNS,
-            {
-                address: localDNS,
-                domains: ["geosite:category-ir", "domain:.ir"],
-                expectIPs: ["geoip:ir"],
-                port: 53,
-            },
+          isWorkerLess ? "https://cloudflare-dns.com/dns-query" : remoteDNS,
+          {
+            address: localDNS,
+            domains: ["geosite:category-ir", "domain:.ir"],
+            expectIPs: ["geoip:ir"],
+            port: 53,
+          },
         ],
         tag: "dns",
     };
 
-    // if (isWorkerLess) {
-    //     // If workerless mode is enabled, resolve necessary DNS queries and populate hosts
-    //     const resolvedDOH = await resolveDNS('cloudflare-dns.com');
-    //     const resolvedCloudflare = await resolveDNS('cloudflare.com');
-    //     const resolvedCLDomain = await resolveDNS('www.speedtest.net.cdn.cloudflare.net');
-    //     const resolvedCFNS_1 = await resolveDNS('ben.ns.cloudflare.com');
-    //     const resolvedCFNS_2 = await resolveDNS('lara.ns.cloudflare.com');
-    //     dnsObject.hosts['cloudflare-dns.com'] = [
-    //         ...resolvedDOH.ipv4, 
-    //         ...resolvedCloudflare.ipv4, 
-    //         ...resolvedCLDomain.ipv4,
-    //         ...resolvedCFNS_1.ipv4,
-    //         ...resolvedCFNS_2.ipv4
-    //     ];
-    // }
+    if (isWorkerLess) {
+        const resolvedDOH = await resolveDNS('cloudflare-dns.com');
+        const resolvedCloudflare = await resolveDNS('cloudflare.com');
+        const resolvedCLDomain = await resolveDNS('www.speedtest.net.cdn.cloudflare.net');
+        const resolvedCFNS_1 = await resolveDNS('ben.ns.cloudflare.com');
+        const resolvedCFNS_2 = await resolveDNS('lara.ns.cloudflare.com');
+        dnsObject.hosts['cloudflare-dns.com'] = [
+            ...resolvedDOH.ipv4, 
+            ...resolvedCloudflare.ipv4, 
+            ...resolvedCLDomain.ipv4,
+            ...resolvedCFNS_1.ipv4,
+            ...resolvedCFNS_2.ipv4
+        ];
+    }
 
     if (blockAds) {
-        // Block ad-related hosts
         dnsObject.hosts["geosite:category-ads-all"] = "127.0.0.1";
         dnsObject.hosts["geosite:category-ads-ir"] = "127.0.0.1";
     }
 
     if (blockPorn) {
-        // Block porn-related hosts
         dnsObject.hosts["geosite:category-porn"] = "127.0.0.1";
     }
 
-    if (!bypassIran || localDNS === 'localhost' /* || isWorkerLess */) {
-        // Remove the last server if not bypassing Iran or using local DNS or in workerless mode
+    if (!bypassIran || localDNS === 'localhost' || isWorkerLess) {
         dnsObject.servers.pop();
     }
 
     return dnsObject;
 }
 
-//const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
-const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer) => {
+const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
     let rules = [
         {
-            // Direct traffic to local DNS on port 53
-            ip: [localDNS],
-            outboundTag: "direct",
-            port: "53",
-            type: "field",
+          ip: [localDNS],
+          outboundTag: "direct",
+          port: "53",
+          type: "field",
         },
         {
-            // Route DNS traffic to specific outbound tag
-            inboundTag: ["socks-in", "http-in"],
-            type: "field",
-            port: "53",
-            outboundTag: "dns-out",
-            enabled: true,
+          inboundTag: ["socks-in", "http-in"],
+          type: "field",
+          port: "53",
+          outboundTag: "dns-out",
+          enabled: true,
         }
     ];
 
-     if (bypassIran || bypassLAN) {
-         let rule = {
-             ip: [],
-             outboundTag: "direct",
-             type: "field",
-         };
-        
-    //     if (bypassIran && !isWorkerLess) {
-    //         // If bypassIran is enabled and not in workerless mode, add specific DNS rules
-    //         rules.push({
-    //             domain: ["geosite:category-ir", "domain:.ir"],
-    //             outboundTag: "direct",
-    //             type: "field",
-    //         });
-    //         rule.ip.push("geoip:ir");
-    //     }
+    if (localDNS === 'localhost' || isWorkerLess) {
+        rules.splice(0,1);
+    }
 
-    //     bypassLAN && rule.ip.push("geoip:private");
-    //     rules.push(rule);
-     }
+    if (bypassIran || bypassLAN) {
+        let rule = {
+            ip: [],
+            outboundTag: "direct",
+            type: "field",
+        };
+        
+        if (bypassIran && !isWorkerLess) {
+            rules.push({
+                domain: ["geosite:category-ir", "domain:.ir"],
+                outboundTag: "direct",
+                type: "field",
+            });
+            rule.ip.push("geoip:ir");
+        }
+
+        bypassLAN && rule.ip.push("geoip:private");
+        rules.push(rule);
+    }
 
     if (blockAds || blockPorn) {
         let rule = {
@@ -2695,18 +2688,22 @@ const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN,
             type: "field",
         };
 
-        // Add rules to block ad and porn domains
         blockAds && rule.domain.push("geosite:category-ads-all", "geosite:category-ads-ir");
         blockPorn && rule.domain.push("geosite:category-porn");
         rules.push(rule);
     }
    
     if (isBalancer) {
-        // Add balancer rule if balancer mode is enabled
         rules.push({
             balancerTag: "all",
             type: "field",
             network: "tcp,udp",
+        });
+    } else  {
+        rules.push({
+            outboundTag: isChain ? "out" : isWorkerLess ? "fragment" : "proxy",
+            type: "field",
+            network: "tcp,udp"
         });
     }
 

@@ -2595,7 +2595,8 @@ const singboxOutboundTemp = {
     tag: ""
 };
 
-const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
+//const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
+const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn) => {
     let dnsObject = {
         hosts: {},
         servers: [
@@ -2646,7 +2647,8 @@ const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPo
     return dnsObject;
 }
 
-const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
+//const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
+const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer) => {
     let rules = [
         {
             // Direct traffic to local DNS on port 53
@@ -2665,12 +2667,12 @@ const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN,
         }
     ];
 
-    // if (bypassIran || bypassLAN) {
-    //     let rule = {
-    //         ip: [],
-    //         outboundTag: "direct",
-    //         type: "field",
-    //     };
+     if (bypassIran || bypassLAN) {
+         let rule = {
+             ip: [],
+             outboundTag: "direct",
+             type: "field",
+         };
         
     //     if (bypassIran && !isWorkerLess) {
     //         // If bypassIran is enabled and not in workerless mode, add specific DNS rules

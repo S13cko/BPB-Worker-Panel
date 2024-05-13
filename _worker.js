@@ -25,7 +25,7 @@ if (!isValidUUID(userID)) {
 export default {
     /**
      * @param {import("@cloudflare/workers-types").Request} request
-     * @param {{UUID?: string, PROXYIP?: string, DNS_RESOLVER_URL?: string, buildworkerlessconfig?: any}} env
+     * @param {{UUID?: string, PROXYIP: string, DNS_RESOLVER_URL: string}} env
      * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
      * @returns {Promise<Response>}
      */
@@ -1076,7 +1076,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
         bestPing.inbounds[1].port = 2081;
     }
 
-    const workerLessConfig = await buildWorkerLessConfig(env, client);
+//    const workerLessConfig = await buildWorkerLessConfig(env, client);
 
 
     
@@ -2595,118 +2595,119 @@ const singboxOutboundTemp = {
     tag: ""
 };
 
-const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
-    let dnsObject = {
-        hosts: {},
-        servers: [
-          isWorkerLess ? "https://cloudflare-dns.com/dns-query" : remoteDNS,
-          {
-            address: localDNS,
-            domains: ["geosite:category-ir", "domain:.ir"],
-            expectIPs: ["geoip:ir"],
-            port: 53,
-          },
-        ],
-        tag: "dns",
-    };
+//const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
+//    let dnsObject = {
+//        hosts: {},
+//        servers: [
+//          isWorkerLess ? "https://cloudflare-dns.com/dns-query" : remoteDNS,
+//          {
+//            address: localDNS,
+//            domains: ["geosite:category-ir", "domain:.ir"],
+//            expectIPs: ["geoip:ir"],
+//            port: 53,
+//          },
+//        ],
+//        tag: "dns",
+//    };
 
-    if (isWorkerLess) {
-        const resolvedDOH = await resolveDNS('cloudflare-dns.com');
-        const resolvedCloudflare = await resolveDNS('cloudflare.com');
-        const resolvedCLDomain = await resolveDNS('www.speedtest.net.cdn.cloudflare.net');
-        const resolvedCFNS_1 = await resolveDNS('ben.ns.cloudflare.com');
-        const resolvedCFNS_2 = await resolveDNS('lara.ns.cloudflare.com');
-        dnsObject.hosts['cloudflare-dns.com'] = [
-            ...resolvedDOH.ipv4, 
-            ...resolvedCloudflare.ipv4, 
-            ...resolvedCLDomain.ipv4,
-            ...resolvedCFNS_1.ipv4,
-            ...resolvedCFNS_2.ipv4
-        ];
-    }
+//    if (isWorkerLess) {
+//        const resolvedDOH = await resolveDNS('cloudflare-dns.com');
+//        const resolvedCloudflare = await resolveDNS('cloudflare.com');
+//        const resolvedCLDomain = await resolveDNS('www.speedtest.net.cdn.cloudflare.net');
+//        const resolvedCFNS_1 = await resolveDNS('ben.ns.cloudflare.com');
+//        const resolvedCFNS_2 = await resolveDNS('lara.ns.cloudflare.com');
+//        dnsObject.hosts['cloudflare-dns.com'] = [
+//            ...resolvedDOH.ipv4, 
+//            ...resolvedCloudflare.ipv4, 
+//            ...resolvedCLDomain.ipv4,
+//            ...resolvedCFNS_1.ipv4,
+//            ...resolvedCFNS_2.ipv4
+//        ];
+//    }
 
-    if (blockAds) {
-        dnsObject.hosts["geosite:category-ads-all"] = "127.0.0.1";
-        dnsObject.hosts["geosite:category-ads-ir"] = "127.0.0.1";
-    }
+//    if (blockAds) {
+//        dnsObject.hosts["geosite:category-ads-all"] = "127.0.0.1";
+//        dnsObject.hosts["geosite:category-ads-ir"] = "127.0.0.1";
+//    }
 
-    if (blockPorn) {
-        dnsObject.hosts["geosite:category-porn"] = "127.0.0.1";
-    }
+//    if (blockPorn) {
+//        dnsObject.hosts["geosite:category-porn"] = "127.0.0.1";
+//    }
 
-    if (!bypassIran || localDNS === 'localhost' || isWorkerLess) {
-        dnsObject.servers.pop();
-    }
+//    if (!bypassIran || localDNS === 'localhost' || isWorkerLess) {
+//    if (!bypassIran || localDNS === 'localhost') {
+//        dnsObject.servers.pop();
+//    }
 
-    return dnsObject;
-}
+//    return dnsObject;
+//}
 
-const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
-    let rules = [
-        {
-          ip: [localDNS],
-          outboundTag: "direct",
-          port: "53",
-          type: "field",
-        },
-        {
-          inboundTag: ["socks-in", "http-in"],
-          type: "field",
-          port: "53",
-          outboundTag: "dns-out",
-          enabled: true,
-        }
-    ];
+//const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
+//    let rules = [
+//        {
+//          ip: [localDNS],
+//          outboundTag: "direct",
+//          port: "53",
+//          type: "field",
+//        },
+//        {
+//          inboundTag: ["socks-in", "http-in"],
+//          type: "field",
+//          port: "53",
+//          outboundTag: "dns-out",
+//          enabled: true,
+//        }
+//    ];
 
-    if (localDNS === 'localhost' || isWorkerLess) {
-        rules.splice(0,1);
-    }
+//    if (localDNS === 'localhost' || isWorkerLess) {
+//        rules.splice(0,1);
+//    }
 
-    if (bypassIran || bypassLAN) {
-        let rule = {
-            ip: [],
-            outboundTag: "direct",
-            type: "field",
-        };
-        
-        if (bypassIran && !isWorkerLess) {
-            rules.push({
-                domain: ["geosite:category-ir", "domain:.ir"],
-                outboundTag: "direct",
-                type: "field",
-            });
-            rule.ip.push("geoip:ir");
-        }
+//    if (bypassIran || bypassLAN) {
+//        let rule = {
+//            ip: [],
+//            outboundTag: "direct",
+//            type: "field",
+//        };
+//        
+//        if (bypassIran && !isWorkerLess) {
+//            rules.push({
+//                domain: ["geosite:category-ir", "domain:.ir"],
+//                outboundTag: "direct",
+//                type: "field",
+//            });
+//            rule.ip.push("geoip:ir");
+//        }
 
-        bypassLAN && rule.ip.push("geoip:private");
-        rules.push(rule);
-    }
+//        bypassLAN && rule.ip.push("geoip:private");
+//        rules.push(rule);
+//    }
 
-    if (blockAds || blockPorn) {
-        let rule = {
-            domain: [],
-            outboundTag: "block",
-            type: "field",
-        };
+//    if (blockAds || blockPorn) {
+//        let rule = {
+//            domain: [],
+//            outboundTag: "block",
+//            type: "field",
+//        };
 
-        blockAds && rule.domain.push("geosite:category-ads-all", "geosite:category-ads-ir");
-        blockPorn && rule.domain.push("geosite:category-porn");
-        rules.push(rule);
-    }
-   
-    if (isBalancer) {
-        rules.push({
-            balancerTag: "all",
-            type: "field",
-            network: "tcp,udp",
-        });
-    } else  {
-        rules.push({
-            outboundTag: isChain ? "out" : isWorkerLess ? "fragment" : "proxy",
-            type: "field",
-            network: "tcp,udp"
-        });
-    }
+//        blockAds && rule.domain.push("geosite:category-ads-all", "geosite:category-ads-ir");
+//        blockPorn && rule.domain.push("geosite:category-porn");
+//        rules.push(rule);
+//    }
+//   
+//    if (isBalancer) {
+//        rules.push({
+//            balancerTag: "all",
+//            type: "field",
+//            network: "tcp,udp",
+//        });
+//    } else  {
+//        rules.push({
+//            outboundTag: isChain ? "out" : isWorkerLess ? "fragment" : "proxy",
+//            type: "field",
+//            network: "tcp,udp"
+//        });
+//    }
 
-    return rules;
-}
+//    return rules;
+//}

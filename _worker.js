@@ -791,7 +791,7 @@ const getNormalConfigs = async (env, hostName, client) => {
             randomUpperCase(hostName)
         }&sni=${
             randomUpperCase(hostName)
-        }&fp=randomized&alpn=h3&path=${
+        }&fp=chrome&alpn=h3&path=${
             encodeURIComponent(`/${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}?ed=2560`)
         }#${encodeURIComponent(remark)}\n`;
     });
@@ -981,7 +981,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
 
     const resolved = await resolveDNS(hostName);
     const Addresses = [
-        hostName,
+        "zula.ir",
         "www.speedtest.net"
     ];
 
@@ -1056,7 +1056,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
 
 
     let bestPing = structuredClone(xrayConfigTemp);
-    bestPing.remarks = 'Fast 1';
+    bestPing.remarks = '🚀best-ping';
     bestPing.dns = await buildDNSObject(remoteDNS, localDNS, blockAds, bypassIran, blockPorn);
     bestPing.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
     bestPing.outbounds[0].settings.fragment.interval = `${intervalMin}-${intervalMax}`;
@@ -1104,7 +1104,7 @@ const getSingboxConfig = async (env, hostName) => {
 
     const resolved = await resolveDNS(hostName);
     const Addresses = [
-        hostName,
+        "zula.ir",
         "www.speedtest.net",
     ];
 

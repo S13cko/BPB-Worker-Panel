@@ -2686,7 +2686,7 @@ const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN,
 
     //     bypassLAN && rule.ip.push("geoip:private");
     //     rules.push(rule);
-    // }
+     }
 
     if (blockAds || blockPorn) {
         let rule = {
@@ -2712,4 +2712,4 @@ const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN,
 
     return rules;
 }
-//123 lines are commented because workerless
+//123 lines changed

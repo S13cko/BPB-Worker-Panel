@@ -16,7 +16,7 @@ let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
 
 let dohURL = 'https://cloudflare-dns.com/dns-query';
 
-let panelVersion = 'custom';
+let panelVersion = '0.0.0';
 
 if (!isValidUUID(userID)) {
     throw new Error('uuid is not valid');
@@ -1715,7 +1715,7 @@ const renderHomePage = async (request, env, hostName, fragConfigs) => {
             </div>
             <h2>FRAGMENT - NEKORAY ⛓️</h2>
             <div class="table-container">
-				<table id="custom-configs-table">
+				<table id="0.0.0-configs-table">
 					<tr style="text-wrap: nowrap;">
 						<th>Config Address</th>
 						<th>Fragment Config</th>
@@ -2712,4 +2712,3 @@ const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN,
 
     return rules;
 }
-//123 lines changed

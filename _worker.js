@@ -25,16 +25,16 @@ if (!isValidUUID(userID)) {
 export default {
     /**
      * @param {import("@cloudflare/workers-types").Request} request
-     * @param {{UUID: string, PROXYIP: string, DNS_RESOLVER_URL: string}} env
+     * @param {{UUID?: string, PROXYIP?: string, DNS_RESOLVER_URL?: string, buildworkerlessconfig?: any}} env
      * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
      * @returns {Promise<Response>}
      */
     async fetch(request, env, ctx) {
         try {
             
-            userID = env.UUID || userID;
-            proxyIP = env.PROXYIP || proxyIP;
-            dohURL = env.DNS_RESOLVER_URL || dohURL;
+            userID = env?.UUID || userID;
+            proxyIP = env?.PROXYIP || proxyIP;
+            dohURL = env?.DNS_RESOLVER_URL || dohURL;
             const upgradeHeader = request.headers.get('Upgrade');
             
             if (!upgradeHeader || upgradeHeader !== 'websocket') {
@@ -72,7 +72,7 @@ export default {
 
                     case '/panel':
 
-                        if (typeof env.bpb !== 'object') {
+                        if (typeof env?.bpb !== 'object') {
                             const errorPage = renderErrorPage('KV Dataset is not properly set!', null, true);
                             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
                         }
@@ -89,7 +89,7 @@ export default {
                         }
                         
                         if (!isAuth) return Response.redirect(`${url.origin}/login`, 302);
-                        if (! await env.bpb.get('proxySettings')) await updateDataset(env);
+                        if (! await env?.bpb.get('proxySettings')) await updateDataset(env);
                         let fragConfs = await getFragmentConfigs(env, host, 'nekoray');
                         let homePage = await renderHomePage(request, env, host, fragConfs);
 
@@ -108,7 +108,7 @@ export default {
                                                       
                     case '/login':
 
-                        if (typeof env.bpb !== 'object') {
+                        if (typeof env?.bpb !== 'object') {
                             const errorPage = renderErrorPage('KV Dataset is not properly set!', null, true);
                             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
                         }
@@ -116,18 +116,18 @@ export default {
                         let loginAuth = await Authenticate(request, env);
                         if (loginAuth) return Response.redirect(`${url.origin}/panel`, 302);
 
-                        let secretKey = await env.bpb.get('secretKey');
-                        const pwd = await env.bpb.get('pwd');
-                        if (!pwd) await env.bpb.put('pwd', 'admin');
+                        let secretKey = await env?.bpb.get('secretKey');
+                        const pwd = await env?.bpb.get('pwd');
+                        if (!pwd) await env?.bpb.put('pwd', 'admin');
 
                         if (!secretKey) {
                             secretKey = generateSecretKey();
-                            await env.bpb.put('secretKey', secretKey);
+                            await env?.bpb.put('secretKey', secretKey);
                         }
 
                         if (request.method === 'POST') {
                             const password = await request.text();
-                            const savedPass = await env.bpb.get('pwd');
+                            const savedPass = await env?.bpb.get('pwd');
 
                             if (password === savedPass) {
                                 const jwtToken = generateJWTToken(secretKey, password);
@@ -175,9 +175,9 @@ export default {
                         let passAuth = await Authenticate(request, env);
                         if (!passAuth) return new Response('Unauthorized!', { status: 401 });           
                         const newPwd = await request.text();
-                        const oldPwd = await env.bpb.get('pwd');
+                        const oldPwd = await env?.bpb.get('pwd');
                         if (newPwd === oldPwd) return new Response('Please enter a new Password!', { status: 400 });
-                        await env.bpb.put('pwd', newPwd);
+                        await env?.bpb.put('pwd', newPwd);
 
                         return new Response('Success', {
                             status: 200,
@@ -199,11 +199,12 @@ export default {
             }
         } catch (err) {
             /** @type {Error} */ let e = err;
-            const errorPage = renderErrorPage('Something went wrong!', e.message.toString(), false);
+            const errorPage = renderErrorPage('Something went wrong!', e.message?.toString(), false);
             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
         }
     },
 };
+
 
 /**
  * Handles VLESS over WebSocket requests by creating a WebSocket pair, accepting the WebSocket connection, and processing the VLESS header.

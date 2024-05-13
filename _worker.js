@@ -24,14 +24,17 @@ if (!isValidUUID(userID)) {
 
 export default {
     /**
+     * @param {import("@cloudflare/workers-types").Request} request
+     * @param {{UUID: string, PROXYIP: string, DNS_RESOLVER_URL: string}} env
+     * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
      * @returns {Promise<Response>}
      */
     async fetch(request, env, ctx) {
         try {
             
-            userID = env?.UUID || userID;
-            proxyIP = env?.PROXYIP || proxyIP;
-            dohURL = env?.DNS_RESOLVER_URL || dohURL;
+            userID = env.UUID || userID;
+            proxyIP = env.PROXYIP || proxyIP;
+            dohURL = env.DNS_RESOLVER_URL || dohURL;
             const upgradeHeader = request.headers.get('Upgrade');
             
             if (!upgradeHeader || upgradeHeader !== 'websocket') {
@@ -69,7 +72,7 @@ export default {
 
                     case '/panel':
 
-                        if (typeof env?.bpb !== 'object') {
+                        if (typeof env.bpb !== 'object') {
                             const errorPage = renderErrorPage('KV Dataset is not properly set!', null, true);
                             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
                         }
@@ -86,7 +89,7 @@ export default {
                         }
                         
                         if (!isAuth) return Response.redirect(`${url.origin}/login`, 302);
-                        if (! await env?.bpb.get('proxySettings')) await updateDataset(env);
+                        if (! await env.bpb.get('proxySettings')) await updateDataset(env);
                         let fragConfs = await getFragmentConfigs(env, host, 'nekoray');
                         let homePage = await renderHomePage(request, env, host, fragConfs);
 
@@ -105,7 +108,7 @@ export default {
                                                       
                     case '/login':
 
-                        if (typeof env?.bpb !== 'object') {
+                        if (typeof env.bpb !== 'object') {
                             const errorPage = renderErrorPage('KV Dataset is not properly set!', null, true);
                             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
                         }
@@ -113,18 +116,18 @@ export default {
                         let loginAuth = await Authenticate(request, env);
                         if (loginAuth) return Response.redirect(`${url.origin}/panel`, 302);
 
-                        let secretKey = await env?.bpb.get('secretKey');
-                        const pwd = await env?.bpb.get('pwd');
-                        if (!pwd) await env?.bpb.put('pwd', 'admin');
+                        let secretKey = await env.bpb.get('secretKey');
+                        const pwd = await env.bpb.get('pwd');
+                        if (!pwd) await env.bpb.put('pwd', 'admin');
 
                         if (!secretKey) {
                             secretKey = generateSecretKey();
-                            await env?.bpb.put('secretKey', secretKey);
+                            await env.bpb.put('secretKey', secretKey);
                         }
 
                         if (request.method === 'POST') {
                             const password = await request.text();
-                            const savedPass = await env?.bpb.get('pwd');
+                            const savedPass = await env.bpb.get('pwd');
 
                             if (password === savedPass) {
                                 const jwtToken = generateJWTToken(secretKey, password);
@@ -172,9 +175,9 @@ export default {
                         let passAuth = await Authenticate(request, env);
                         if (!passAuth) return new Response('Unauthorized!', { status: 401 });           
                         const newPwd = await request.text();
-                        const oldPwd = await env?.bpb.get('pwd');
+                        const oldPwd = await env.bpb.get('pwd');
                         if (newPwd === oldPwd) return new Response('Please enter a new Password!', { status: 400 });
-                        await env?.bpb.put('pwd', newPwd);
+                        await env.bpb.put('pwd', newPwd);
 
                         return new Response('Success', {
                             status: 200,
@@ -196,12 +199,11 @@ export default {
             }
         } catch (err) {
             /** @type {Error} */ let e = err;
-            const errorPage = renderErrorPage('Something went wrong!', e.message?.toString(), false);
+            const errorPage = renderErrorPage('Something went wrong!', e.message.toString(), false);
             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
         }
     },
 };
-
 
 /**
  * Handles VLESS over WebSocket requests by creating a WebSocket pair, accepting the WebSocket connection, and processing the VLESS header.
@@ -794,7 +796,7 @@ const getNormalConfigs = async (env, hostName, client) => {
         }#${encodeURIComponent(remark)}\n`;
     });
 
-    const subscription = client === 'singbox' ? btoa(vlessWsTls) : btoa(vlessWsTls.replaceAll('http/1.1', 'h2,h3'));
+    const subscription = client === 'singbox' ? btoa(vlessWsTls) : btoa(vlessWsTls.replaceAll('h3', 'h2,h3'));
     return subscription;
 }
 
@@ -898,54 +900,54 @@ const buildProxyOutbound = async (proxyParams) => {
     return proxyOutbound;
 }
 
-//const buildWorkerLessConfig = async (env, client) => {
-//    let proxySettings = {};
+const buildWorkerLessConfig = async (env, client) => {
+    let proxySettings = {};
 
-//    try {
-//        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
-//    } catch (error) {
-//        console.log(error);
-//        throw new Error(`An error occurred while generating WorkerLess config - ${error}`);
-//    }
+    try {
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
+    } catch (error) {
+        console.log(error);
+        throw new Error(`An error occurred while generating WorkerLess config - ${error}`);
+    }
 
-//    const { remoteDNS, localDNS, lengthMin,  lengthMax,  intervalMin,  intervalMax, blockAds, bypassIran, blockPorn, bypassLAN } = proxySettings;  
-//    let fakeOutbound = structuredClone(xrayOutboundTemp);
-//    delete fakeOutbound.mux;
-//    fakeOutbound.settings.vnext[0].address = 'google.com';
-//    fakeOutbound.settings.vnext[0].users[0].id = userID;
-//    delete fakeOutbound.streamSettings.sockopt;
-//    fakeOutbound.streamSettings.tlsSettings.serverName = 'google.com';
-//    fakeOutbound.streamSettings.wsSettings.headers.Host = 'google.com';
-//    fakeOutbound.streamSettings.wsSettings.path = '/';
-//    delete fakeOutbound.streamSettings.grpcSettings;
-//    delete fakeOutbound.streamSettings.tcpSettings;
-//    delete fakeOutbound.streamSettings.realitySettings;
-//    fakeOutbound.tag = 'fake-outbound';
+    const { remoteDNS, localDNS, lengthMin,  lengthMax,  intervalMin,  intervalMax, blockAds, bypassIran, blockPorn, bypassLAN } = proxySettings;  
+    let fakeOutbound = structuredClone(xrayOutboundTemp);
+    delete fakeOutbound.mux;
+    fakeOutbound.settings.vnext[0].address = 'google.com';
+    fakeOutbound.settings.vnext[0].users[0].id = userID;
+    delete fakeOutbound.streamSettings.sockopt;
+    fakeOutbound.streamSettings.tlsSettings.serverName = 'google.com';
+    fakeOutbound.streamSettings.wsSettings.headers.Host = 'google.com';
+    fakeOutbound.streamSettings.wsSettings.path = '/';
+    delete fakeOutbound.streamSettings.grpcSettings;
+    delete fakeOutbound.streamSettings.tcpSettings;
+    delete fakeOutbound.streamSettings.realitySettings;
+    fakeOutbound.tag = 'fake-outbound';
 
-//    let fragConfig = structuredClone(xrayConfigTemp);
-//    fragConfig.remarks  = '⭐WorkerLess'
-//    fragConfig.dns = await buildDNSObject(remoteDNS, localDNS, blockAds, bypassIran, blockPorn, true);
-//    fragConfig.outbounds[0].settings.domainStrategy = 'UseIP';
-//    fragConfig.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
-//    fragConfig.outbounds[0].settings.fragment.interval = `${intervalMin}-${intervalMax}`;
-//    fragConfig.outbounds = [
-//        {...fragConfig.outbounds[0]}, 
-//        {...fragConfig.outbounds[1]}, 
-//        {...fakeOutbound}, 
-//        {...fragConfig.outbounds[2]}, 
-//        {...fragConfig.outbounds[3]}
-//    ];
-//    fragConfig.routing.rules = buildRoutingRules(localDNS, blockAds, bypassIran, blockPorn, bypassLAN, false, false, true);
-//    delete fragConfig.routing.balancers;
-//    delete fragConfig.observatory;
+    let fragConfig = structuredClone(xrayConfigTemp);
+    fragConfig.remarks  = 'WorkerLess ⭐'
+    fragConfig.dns = await buildDNSObject(remoteDNS, localDNS, blockAds, bypassIran, blockPorn, true);
+    fragConfig.outbounds[0].settings.domainStrategy = 'UseIP';
+    fragConfig.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
+    fragConfig.outbounds[0].settings.fragment.interval = `${intervalMin}-${intervalMax}`;
+    fragConfig.outbounds = [
+        {...fragConfig.outbounds[0]}, 
+        {...fragConfig.outbounds[1]}, 
+        {...fakeOutbound}, 
+        {...fragConfig.outbounds[2]}, 
+        {...fragConfig.outbounds[3]}
+    ];
+    fragConfig.routing.rules = buildRoutingRules(localDNS, blockAds, bypassIran, blockPorn, bypassLAN, false, false, true);
+    delete fragConfig.routing.balancers;
+    delete fragConfig.observatory;
 
-//    if (client === 'nekoray') {
-//        fragConfig.inbounds[0].port = 2080;
-//        fragConfig.inbounds[1].port = 2081;
-//    }
+    if (client === 'nekoray') {
+        fragConfig.inbounds[0].port = 2080;
+        fragConfig.inbounds[1].port = 2081;
+    }
 
-//    return fragConfig;
-//}
+    return fragConfig;
+}
 
 const getFragmentConfigs = async (env, hostName, client) => {
     let Configs = [];
@@ -1073,13 +1075,13 @@ const getFragmentConfigs = async (env, hostName, client) => {
         bestPing.inbounds[1].port = 2081;
     }
 
-//    const workerLessConfig = await buildWorkerLessConfig(env, client);
+    const workerLessConfig = await buildWorkerLessConfig(env, client);
 
 
     
     Configs.push(
-        { address: 'Best-Ping', config: bestPing}//, 
-//        { address: 'WorkerLess', config: workerLessConfig}
+        { address: 'Best-Ping', config: bestPing}, 
+        { address: 'WorkerLess', config: workerLessConfig}
     );
 
     return Configs;
@@ -1288,8 +1290,8 @@ const renderHomePage = async (request, env, hostName, fragConfigs) => {
                 <td>
                     ${config.address === 'Best-Ping' 
                         ? `<div  style="justify-content: center;"><span class="material-symbols-outlined">speed</span><span>&nbsp;<b>Best-Ping</b></span></div>` 
-//                        : config.address === 'WorkerLess'
-//                            ? `<div  style="justify-content: center;"><span class="material-symbols-outlined">star</span><span>&nbsp;<b>WorkerLess</b></span></div>`
+                        : config.address === 'WorkerLess'
+                            ? `<div  style="justify-content: center;"><span class="material-symbols-outlined">star</span><span>&nbsp;<b>WorkerLess</b></span></div>`
                             : config.address
                     }
                 </td>
@@ -2592,119 +2594,118 @@ const singboxOutboundTemp = {
     tag: ""
 };
 
-//const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
-//    let dnsObject = {
-//        hosts: {},
-//        servers: [
-//          isWorkerLess ? "https://cloudflare-dns.com/dns-query" : remoteDNS,
-//          {
-//            address: localDNS,
-//            domains: ["geosite:category-ir", "domain:.ir"],
-//            expectIPs: ["geoip:ir"],
-//            port: 53,
-//          },
-//        ],
-//        tag: "dns",
-//    };
+const buildDNSObject = async (remoteDNS, localDNS, blockAds, bypassIran, blockPorn, isWorkerLess) => {
+    let dnsObject = {
+        hosts: {},
+        servers: [
+          isWorkerLess ? "https://cloudflare-dns.com/dns-query" : remoteDNS,
+          {
+            address: localDNS,
+            domains: ["geosite:category-ir", "domain:.ir"],
+            expectIPs: ["geoip:ir"],
+            port: 53,
+          },
+        ],
+        tag: "dns",
+    };
 
-//    if (isWorkerLess) {
-//        const resolvedDOH = await resolveDNS('cloudflare-dns.com');
-//        const resolvedCloudflare = await resolveDNS('cloudflare.com');
-//        const resolvedCLDomain = await resolveDNS('www.speedtest.net.cdn.cloudflare.net');
-//        const resolvedCFNS_1 = await resolveDNS('ben.ns.cloudflare.com');
-//        const resolvedCFNS_2 = await resolveDNS('lara.ns.cloudflare.com');
-//        dnsObject.hosts['cloudflare-dns.com'] = [
-//            ...resolvedDOH.ipv4, 
-//            ...resolvedCloudflare.ipv4, 
-//            ...resolvedCLDomain.ipv4,
-//            ...resolvedCFNS_1.ipv4,
-//            ...resolvedCFNS_2.ipv4
-//        ];
-//    }
+    if (isWorkerLess) {
+        const resolvedDOH = await resolveDNS('cloudflare-dns.com');
+        const resolvedCloudflare = await resolveDNS('cloudflare.com');
+        const resolvedCLDomain = await resolveDNS('www.speedtest.net.cdn.cloudflare.net');
+        const resolvedCFNS_1 = await resolveDNS('ben.ns.cloudflare.com');
+        const resolvedCFNS_2 = await resolveDNS('lara.ns.cloudflare.com');
+        dnsObject.hosts['cloudflare-dns.com'] = [
+            ...resolvedDOH.ipv4, 
+            ...resolvedCloudflare.ipv4, 
+            ...resolvedCLDomain.ipv4,
+            ...resolvedCFNS_1.ipv4,
+            ...resolvedCFNS_2.ipv4
+        ];
+    }
 
-//    if (blockAds) {
-//        dnsObject.hosts["geosite:category-ads-all"] = "127.0.0.1";
-//        dnsObject.hosts["geosite:category-ads-ir"] = "127.0.0.1";
-//    }
+    if (blockAds) {
+        dnsObject.hosts["geosite:category-ads-all"] = "127.0.0.1";
+        dnsObject.hosts["geosite:category-ads-ir"] = "127.0.0.1";
+    }
 
-//    if (blockPorn) {
-//        dnsObject.hosts["geosite:category-porn"] = "127.0.0.1";
-//    }
+    if (blockPorn) {
+        dnsObject.hosts["geosite:category-porn"] = "127.0.0.1";
+    }
 
-//    if (!bypassIran || localDNS === 'localhost' || isWorkerLess) {
-//    if (!bypassIran || localDNS === 'localhost') {
-//        dnsObject.servers.pop();
-//    }
+    if (!bypassIran || localDNS === 'localhost' || isWorkerLess) {
+        dnsObject.servers.pop();
+    }
 
-//    return dnsObject;
-//}
+    return dnsObject;
+}
 
-//const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
-//    let rules = [
-//        {
-//          ip: [localDNS],
-//          outboundTag: "direct",
-//          port: "53",
-//          type: "field",
-//        },
-//        {
-//          inboundTag: ["socks-in", "http-in"],
-//          type: "field",
-//          port: "53",
-//          outboundTag: "dns-out",
-//          enabled: true,
-//        }
-//    ];
+const buildRoutingRules = (localDNS, blockAds, bypassIran, blockPorn, bypassLAN, isChain, isBalancer, isWorkerLess) => {
+    let rules = [
+        {
+          ip: [localDNS],
+          outboundTag: "direct",
+          port: "53",
+          type: "field",
+        },
+        {
+          inboundTag: ["socks-in", "http-in"],
+          type: "field",
+          port: "53",
+          outboundTag: "dns-out",
+          enabled: true,
+        }
+    ];
 
-//    if (localDNS === 'localhost' || isWorkerLess) {
-//        rules.splice(0,1);
-//    }
+    if (localDNS === 'localhost' || isWorkerLess) {
+        rules.splice(0,1);
+    }
 
-//    if (bypassIran || bypassLAN) {
-//        let rule = {
-//            ip: [],
-//            outboundTag: "direct",
-//            type: "field",
-//        };
-//        
-//        if (bypassIran && !isWorkerLess) {
-//            rules.push({
-//                domain: ["geosite:category-ir", "domain:.ir"],
-//                outboundTag: "direct",
-//                type: "field",
-//            });
-//            rule.ip.push("geoip:ir");
-//        }
+    if (bypassIran || bypassLAN) {
+        let rule = {
+            ip: [],
+            outboundTag: "direct",
+            type: "field",
+        };
+        
+        if (bypassIran && !isWorkerLess) {
+            rules.push({
+                domain: ["geosite:category-ir", "domain:.ir"],
+                outboundTag: "direct",
+                type: "field",
+            });
+            rule.ip.push("geoip:ir");
+        }
 
-//        bypassLAN && rule.ip.push("geoip:private");
-//        rules.push(rule);
-//    }
+        bypassLAN && rule.ip.push("geoip:private");
+        rules.push(rule);
+    }
 
-//    if (blockAds || blockPorn) {
-//        let rule = {
-//            domain: [],
-//            outboundTag: "block",
-//            type: "field",
-//        };
+    if (blockAds || blockPorn) {
+        let rule = {
+            domain: [],
+            outboundTag: "block",
+            type: "field",
+        };
 
-//        blockAds && rule.domain.push("geosite:category-ads-all", "geosite:category-ads-ir");
-//        blockPorn && rule.domain.push("geosite:category-porn");
-//        rules.push(rule);
-//    }
-//   
-//    if (isBalancer) {
-//        rules.push({
-//            balancerTag: "all",
-//            type: "field",
-//            network: "tcp,udp",
-//        });
-//    } else  {
-//        rules.push({
-//            outboundTag: isChain ? "out" : isWorkerLess ? "fragment" : "proxy",
-//            type: "field",
-//            network: "tcp,udp"
-//        });
-//    }
+        blockAds && rule.domain.push("geosite:category-ads-all", "geosite:category-ads-ir");
+        blockPorn && rule.domain.push("geosite:category-porn");
+        rules.push(rule);
+    }
+   
+    if (isBalancer) {
+        rules.push({
+            balancerTag: "all",
+            type: "field",
+            network: "tcp,udp",
+        });
+    } else  {
+        rules.push({
+            outboundTag: isChain ? "out" : isWorkerLess ? "fragment" : "proxy",
+            type: "field",
+            network: "tcp,udp"
+        });
+    }
 
-//    return rules;
-//}
+    return rules;
+}

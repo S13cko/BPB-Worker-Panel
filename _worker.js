@@ -1,7 +1,6 @@
 // @ts-nocheck
 // <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2023-06-22 15:20:02 UTC<!--GAMFC-END-->.
 // @ts-ignore
-// https://github.com/bia-pain-bache/BPB-Worker-Panel
 
 import { connect } from 'cloudflare:sockets';
 
@@ -783,13 +782,10 @@ const getNormalConfigs = async (env, hostName, client) => {
     const Addresses = [
         hostName,
         'www.speedtest.net',
-        ...(cleanIPs ? cleanIPs.split(',') : []),
-        ...resolved.ipv4,
-        ...resolved.ipv6.map((ip) => `[${ip}]`),
     ];
 
     Addresses.forEach((addr) => {
-        let remark = `💦 BPB - ${addr}`;
+        let remark = `Fast`;
         remark = remark.length <= 30 ? remark : `${remark.slice(0,29)}...`;
 
         vlessWsTls += 'vless' + `://${userID}@${addr}:443?encryption=none&security=tls&type=ws&host=${
@@ -930,7 +926,7 @@ const buildWorkerLessConfig = async (env, client) => {
     fakeOutbound.tag = 'fake-outbound';
 
     let fragConfig = structuredClone(xrayConfigTemp);
-    fragConfig.remarks  = '💦 BPB Frag - WorkerLess ⭐'
+    fragConfig.remarks  = 'WorkerLess ⭐'
     fragConfig.dns = await buildDNSObject(remoteDNS, localDNS, blockAds, bypassIran, blockPorn, true);
     fragConfig.outbounds[0].settings.domainStrategy = 'UseIP';
     fragConfig.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
@@ -987,10 +983,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
     const resolved = await resolveDNS(hostName);
     const Addresses = [
         hostName,
-        "www.speedtest.net",
-        ...(cleanIPs ? cleanIPs.split(",") : []),
-        ...resolved.ipv4,
-        ...resolved.ipv6.map((ip) => `[${ip}]`)
+        "www.speedtest.net"
     ];
 
     if (outProxy) {
@@ -1012,7 +1005,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
         let addr = Addresses[index];
         let fragConfig = structuredClone(xrayConfigTemp);
         let outbound = structuredClone(xrayOutboundTemp);
-        let remark = `💦 BPB Frag - ${addr}`;
+        let remark = `Fast`;
         delete outbound.mux;
         delete outbound.streamSettings.grpcSettings;
         delete outbound.streamSettings.realitySettings;
@@ -1064,7 +1057,7 @@ const getFragmentConfigs = async (env, hostName, client) => {
 
 
     let bestPing = structuredClone(xrayConfigTemp);
-    bestPing.remarks = '💦 BPB Frag - Best Ping 💥';
+    bestPing.remarks = 'Fast 1';
     bestPing.dns = await buildDNSObject(remoteDNS, localDNS, blockAds, bypassIran, blockPorn);
     bestPing.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
     bestPing.outbounds[0].settings.fragment.interval = `${intervalMin}-${intervalMax}`;
@@ -1114,9 +1107,6 @@ const getSingboxConfig = async (env, hostName) => {
     const Addresses = [
         hostName,
         "www.speedtest.net",
-        ...(cleanIPs ? cleanIPs.split(",") : []),
-        ...resolved.ipv4,
-        ...resolved.ipv6.map((ip) => `[${ip}]`),
     ];
 
     Addresses.forEach(addr => {
@@ -1139,16 +1129,16 @@ const updateDataset = async (env, Settings) => {
 
     const vlessConfig = Settings?.get('outProxy');
     const proxySettings = {
-        remoteDNS: Settings?.get('remoteDNS') || 'https://94.140.14.14/dns-query',
-        localDNS: Settings?.get('localDNS') || '8.8.8.8',
+        remoteDNS: Settings?.get('remoteDNS') || 'udp://1.1.1.1',
+        localDNS: Settings?.get('localDNS') || '1.1.1.2',
         lengthMin: Settings?.get('fragmentLengthMin') || '100',
         lengthMax: Settings?.get('fragmentLengthMax') || '200',
         intervalMin: Settings?.get('fragmentIntervalMin') || '5',
         intervalMax: Settings?.get('fragmentIntervalMax') || '10',
-        blockAds: Settings?.get('block-ads') || false,
-        bypassIran: Settings?.get('bypass-iran') || false,
+        blockAds: Settings?.get('block-ads') || true,
+        bypassIran: Settings?.get('bypass-iran') || true,
         blockPorn: Settings?.get('block-porn') || false,
-        bypassLAN: Settings?.get('bypass-lan') || false,
+        bypassLAN: Settings?.get('bypass-lan') || true,
         cleanIPs: Settings?.get('cleanIPs')?.replaceAll(' ', '') || '',
         proxyIP: Settings?.get('proxyIP') || '',
         outProxy: vlessConfig || '',
@@ -2089,7 +2079,7 @@ const renderLoginPage = async () => {
     </head>
     <body>
         <div class="container">
-            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</span> 💦</h1>
+            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</h1>
             <div class="form-container">
                 <h2>User Login</h2>
                 <form id="loginForm">
@@ -2160,10 +2150,10 @@ const renderErrorPage = (message, error, refer) => {
 
     <body>
         <div id="error-container">
-            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</span> 💦</h1>
+            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</h1>
             <div id="error-message">
                 <h2>${message} ${refer 
-                    ? 'Please try again or refer to <a href="https://github.com/bia-pain-bache/BPB-Worker-Panel/blob/main/README.md">documents</a>' 
+                    ? 'Please try again!' 
                     : ''}
                 </h2>
                 <p><b>${error ? `⚠️ ${error}` : ''}</b></p>
@@ -2182,7 +2172,7 @@ const xrayConfigTemp = {
     dns: {},
     inbounds: [
         {
-            port: 10808,
+            port: 2080,
             protocol: "socks",
             settings: {
                 auth: "noauth",
@@ -2196,7 +2186,7 @@ const xrayConfigTemp = {
             tag: "socks-in",
         },
         {
-            port: 10809,
+            port: 2081,
             protocol: "http",
             settings: {
                 auth: "noauth",

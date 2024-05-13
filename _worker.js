@@ -645,10 +645,10 @@ function base64ToArrayBuffer(base64Str) {
  * @param {string} uuid The string to validate as a UUID.
  * @returns {boolean} True if the string is a valid UUID, false otherwise.
  */
-function isValidUUID(uuid) {
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-	return uuidRegex.test(uuid);
-}
+//function isValidUUID(uuid) {
+//	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+//	return uuidRegex.test(uuid);
+//}
 
 const WS_READY_STATE_OPEN = 1;
 const WS_READY_STATE_CLOSING = 2;
